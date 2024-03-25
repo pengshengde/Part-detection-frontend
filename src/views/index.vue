@@ -1,20 +1,6 @@
 <template>
   <div class="app-container home">
     <el-row display:flex justify-content:space-between>
-<!--      <el-col :span="4" class="card-box">
-        <el-card>
-          <div slot="header">
-            <span><i class="el-icon-s-marketing"></i>产线1检测</span>
-            <span style="float: right">
-            <el-icon :name="getIconName(status)" :color="getIconColor(status)" style="padding: 3px 0;"></el-icon>
-            </span>
-          </div>
-
-          <div class="card-box-content text-success">
-            <span>{{detectResult.day}}</span>
-          </div>
-        </el-card>
-      </el-col>-->
       <el-col :span="12" class="card-box" >
         <el-card shadow="hover">
           <div slot="header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -92,6 +78,41 @@
         <el-card shadow="hover">
           <div slot="header"><span><i class="el-icon-data-analysis"></i> 检测数据统计</span></div>
           <div>
+            <!-- 第一部分：下拉选择框 -->
+            <div style="padding: 20px;display: flex; justify-content: center;" >
+              <el-form :model="lineQueryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" >
+                <el-form-item label="零件类型" prop="partTypeName">
+                  <el-select
+                    v-model="lineQueryParams.partTypeName"
+                    placeholder="请输入零件类型"
+                    clearable
+                    style="width: 240px"
+                  >
+                    <el-option
+                      v-for="dict in dict.type.quality_part_type"
+                      :key="dict.value"
+                      :label="dict.label"
+                      :value="dict.value"
+                    />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="检测时间">
+                  <el-date-picker
+                    v-model="lineDataRange"
+                    style="width: 240px"
+                    value-format="yyyy-MM-dd"
+                    type="daterange"
+                    range-separator="-"
+                    start-placeholder="开始日期"
+                    end-placeholder="结束日期"
+                  ></el-date-picker>
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" icon="el-icon-search" size="mini" @click="handleLineQuery">搜索</el-button>
+                  <el-button icon="el-icon-refresh" size="mini" @click="handleLineReset">重置</el-button>
+                </el-form-item>
+              </el-form>
+            </div>
             <line-chart :chart-data="lineChartData"  :x-aixs-data="xAixsData" />
           </div>
         </el-card>
@@ -101,47 +122,133 @@
     <el-row style="background:#fff;padding:16px 16px 0; margin-bottom:20px;">
       <el-col>
         <el-card shadow="hover">
-          <div slot="header"><span><i class="el-icon-data-analysis"></i> 缺陷数据统计</span></div>
+          <div slot="header">
+            <span>
+              <div style="display: flex; align-items: center;">
+                  <i class="el-icon-data-analysis" style="margin-right: 10px; width: 20px;"></i>
+                  <span>缺陷数据统计</span>
+              </div>
+            </span>
+
+          </div>
+
           <div>
-            <line-pie-chart :data="LinePieChartData"  />
+            <!-- 第一部分：下拉选择框 -->
+            <div style="padding: 20px;display: flex; justify-content: center;" >
+              <el-form :model="defectQueryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" >
+                <el-form-item label="零件类型" prop="partTypeName">
+                  <el-select
+                    v-model="defectQueryParams.partTypeName"
+                    placeholder="请输入零件类型"
+                    clearable
+                    style="width: 240px"
+                  >
+                    <el-option
+                      v-for="dict in dict.type.quality_part_type"
+                      :key="dict.value"
+                      :label="dict.label"
+                      :value="dict.value"
+                    />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="检测时间">
+                  <el-date-picker
+                    v-model="defectDateRange"
+                    style="width: 240px"
+                    value-format="yyyy-MM-dd"
+                    type="daterange"
+                    range-separator="-"
+                    start-placeholder="开始日期"
+                    end-placeholder="结束日期"
+                  ></el-date-picker>
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" icon="el-icon-search" size="mini" @click="handleLinePieQuery">搜索</el-button>
+                  <el-button icon="el-icon-refresh" size="mini" @click="handleLinePieReset">重置</el-button>
+                </el-form-item>
+              </el-form>
+            </div>
+            <!-- 第二部分：图表 -->
+            <line-pie-chart :data="linePieChartData" />
           </div>
         </el-card>
       </el-col>
     </el-row>
 
-    <el-row>
-      <el-col  class="card-box">
+    <el-row style="background:#fff;padding:16px 16px 0; margin-bottom:20px;">
+      <el-col>
         <el-card shadow="hover">
-          <div slot="header"><span><i class="el-icon-view"></i> 设备状态</span></div>
-          <div style="height: 350px; background:#fff;padding:16px 16px 0; margin-bottom:32px;">
-            <div ref="ganttChart" style="height: 100%;"></div>
+          <div slot="header">
+            <span>
+              <div style="display: flex; align-items: center;">
+                  <i class="el-icon-data-analysis" style="margin-right: 10px; width: 20px;"></i>
+                  <span>合格率数据统计</span>
+              </div>
+            </span>
+          </div>
+
+          <div>
+            <!-- 第一部分：下拉选择框 -->
+            <div style="padding: 20px;display: flex; justify-content: center;" >
+              <el-form :model="defectQueryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" >
+                <el-form-item label="零件类型" prop="partTypeName">
+                  <el-select
+                    v-model="defectQueryParams.partTypeName"
+                    placeholder="请输入零件类型"
+                    clearable
+                    style="width: 240px"
+                  >
+                    <el-option
+                      v-for="dict in dict.type.quality_part_type"
+                      :key="dict.value"
+                      :label="dict.label"
+                      :value="dict.value"
+                    />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="检测时间">
+                  <el-date-picker
+                    v-model="stackBarDataRange"
+                    style="width: 240px"
+                    value-format="yyyy-MM-dd"
+                    type="daterange"
+                    range-separator="-"
+                    start-placeholder="开始日期"
+                    end-placeholder="结束日期"
+                  ></el-date-picker>
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" icon="el-icon-search" size="mini" @click="handleLinePieQuery">搜索</el-button>
+                  <el-button icon="el-icon-refresh" size="mini" @click="handleLinePieReset">重置</el-button>
+                </el-form-item>
+              </el-form>
+            </div>
+            <!-- 第二部分：图表 -->
+            <stack-bar :stack-bar-data="data" :x-aixs-data="stackBarTime" />
           </div>
         </el-card>
       </el-col>
-
     </el-row>
-
 
 
   </div>
 </template>
 
 <script>
-import {getDetectResult, getEquipmentStatus} from "@/api/system/dashboard";
-import * as echarts from "echarts";
+
 import LineChart from './dashboard/LineChart'
-import {getStatisticInfo, listDevPart} from "@/api/statistic";
-import {listBatchT} from "@/api/quality/batchT";
+import {getStatisticInfo, listBatch, listBatchLine, listDevPart} from "@/api/statistic";
 import LinePieChart from "@/views/dashboard/LinePieChart.vue";
-import dict from "@/utils/dict";
-import {listDefectType} from "@/api/quality/defect";
+import moment from "moment";
+import StackBar from "@/views/dashboard/StackBar.vue";
 
 export default {
 
-  dicts: ['detect_type_name'],
+  dicts: ['detect_type_name','quality_part_type'],
 
   name: "Index",
   components: {
+    StackBar,
     LinePieChart,
     LineChart,
   },
@@ -150,6 +257,8 @@ export default {
       // 遮罩层
       loading: true,
 
+      // 显示搜索条件
+      showSearch: true,
       showHeader:true,
 
       // 图片检测的结果
@@ -172,23 +281,24 @@ export default {
         isAsc:"desc",
         defectTypeName:undefined,
         devName:undefined,
+        partTypeName:undefined,
       },
-      // 批次信息统计的查询参数
-      batchQueryParams:{
-        pageNum: 1,
-        pageSize: 10,
-        orderByColumn:"detectEndTime",
-        isAsc: "desc",
-      },
-      defectTypeQueryParams:{
-        pageNum: 1,
-        pageSize: 10,
-      },
-      // 日期范围
       dateRange: [],
+      // 批次信息统计的查询参数
+      lineQueryParams:{
+/*        orderByColumn:"detectEndTime",
+        isAsc: "desc",*/
+        partTypeName:undefined,
+      },
+      lineDataRange:[],
+      // 日期范围
 
-      defectTypeList:["划伤","积屑瘤","划痕","腐蚀","振刀纹","过切","杂色"],
 
+      defectQueryParams:{
+        partTypeName: undefined,
+      },
+      // 查看缺陷排行的时间范围
+      defectDateRange: [],
 
       // 折线图的数据
       lineChartData:{
@@ -200,399 +310,24 @@ export default {
       xAixsData:[],
 
       // 表与折线图的数据
-      LinePieChartData:[
-        ['Time', 'Wen', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat','Sun'],
+      linePieChartData:[
       ],
 
 
-      // 甘特图的一些参数
-      data: [],
-      dataCount: 5,
-      startTime: new Date().setHours(0,0,0,0),
-      types: [
-        { name: '运行', color: '#75d874' },
-        { name: '故障', color: '#bd6d6c' },
-        { name: '等待', color: '#e0bc78' },
-        // { name: '备用', color: '#7b9ce1' },
+      data:[
+        [100, 302, 301, 334, 390, 330, 320],
+        [320, 132, 101, 134, 90, 230, 210],
       ],
-      categories: ['设备1', '设备2', '设备3','设备4', '设备5', '设备6'],
-
-
-      equipmentStatusList:null,
+      stackBarTime:['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      stackBarDataRange:[],
 
     };
   },
 
-  mounted() {
-/*
-    this.qualifiedRate = echarts.init(this.$refs.qualifiedRate)
-    const qualifiedRateValue = this.qualifiedRateValue
-    this.qualifiedRate.setOption({
-      series: [
-        {
-          name: '合格率',
-          type: 'gauge',
-          center: ['50%', '55%'],
-          radius: '75%',
-          min: 0,
-          max: 1,
-          itemStyle: {
-            color: '#4FC3F7',
-            shadowColor: 'rgba(0,138,255,0.45)'
-          },
-          // 进度条
-          progress: {
-            show: true,
-            width: 20,
-            roundCap: true
-          },
-          // 坐标轴线
-          axisLine: {
-            show: true,
-            roundCap: true,
-            lineStyle: {
-              width: 20
-            }
-          },
-          // 仪表盘指针
-          pointer: {
-            show: false
-          },
-          // 刻度标签
-          axisLabel: {
-            show: false
-          },
-          // 刻度
-          axisTick: {
-            show: false
-          },
-          // 分隔线
-          splitLine: {
-            show: false
-          },
-          title: {
-            offsetCenter: [0, '20%'],
-            fontSize: 20
-          },
-          detail: {
-            offsetCenter: [0, '-10%'],
-            valueAnimation: true,
-            textStyle: {
-              fontSize: 30
-            },
-            formatter: '{value}'
-          },
-          data: [
-            { value: qualifiedRateValue, name: "合格率" }
-          ]
-        }
-      ]
-    })
-
-    this.unqualifiedRate = echarts.init(this.$refs.unqualifiedRate)
-    const unqualifiedRateValue = this.unqualifiedRateValue
-    this.unqualifiedRate.setOption({
-      series: [
-        {
-          name: '评价',
-          type: 'gauge',
-          center: ['50%', '55%'],
-          radius: '75%',
-          min: 0,
-          max: 1,
-          itemStyle: {
-            color: '#ed5565',
-            shadowColor: 'rgba(255,0,132,0.45)'
-          },
-          // 进度条
-          progress: {
-            show: true,
-            width: 20,
-            roundCap: true
-          },
-          // 坐标轴线
-          axisLine: {
-            show: true,
-            roundCap: true,
-            lineStyle: {
-              width: 20
-            }
-          },
-          // 仪表盘指针
-          pointer: {
-            show: false
-          },
-          // 刻度标签
-          axisLabel: {
-            show: false
-          },
-          // 刻度
-          axisTick: {
-            show: false
-          },
-          // 分隔线
-          splitLine: {
-            show: false
-          },
-          title: {
-            offsetCenter: [0, '20%'],
-            fontSize: 20
-          },
-          detail: {
-            offsetCenter: [0, '-10%'],
-            valueAnimation: true,
-            textStyle: {
-              fontSize: 30
-            },
-            formatter: '{value}'
-          },
-          data: [
-            { value: unqualifiedRateValue, name: "不合格率" }
-          ]
-        }
-      ]
-    })
-*/
-
-/*    this.lineChart = echarts.init(this.$refs.lineChart)
-    this.lineChart.setOption({
-      title: {
-        text: '数据分析'
-      },
-      // 提示框
-      tooltip: {
-        trigger: 'axis'
-      },
-      // 图例
-      legend: {
-        icon: 'circle',
-        left: 'center',
-        top: 0,
-        data: ['合格', '不合格']
-      },
-      grid: {
-        left: '3%',
-        right: '3%',
-        bottom: '3%',
-        containLabel: true
-      },
-      // 工具栏
-      toolbox: {
-        feature: {
-          saveAsImage: {
-            type: 'png'
-          },
-          magicType: {
-            type: ['line', 'bar', 'stack']
-          }
-        }
-      },
-      xAxis: {
-        type: 'category',
-        boundaryGap: false,
-        data: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
-      },
-      yAxis: {
-        type: 'value'
-      },
-      series: [
-        {
-          name: '合格',
-          type: 'line',
-          // smooth: true, // 平滑曲线显示
-          data: [120, 132, 101, 134, 190, 230, 210, 201, 234, 290, 230, 210]
-        },
-        {
-          name: '不合格',
-          type: 'line',
-          stack: '总量',
-          // smooth: true,
-          data: [10, 22, 21, 14, 19, 13, 20, 11, 34, 29, 20, 10]
-        }
-      ]
-    })*/
-
-    this.ganttChart = echarts.init(this.$refs.ganttChart)
-    this.ganttChart.setOption(
-      {
-        //鼠标提示
-        tooltip: {
-          formatter: function (params) {
-            var duration = params.value[3];
-            var hours = Math.floor(duration / (60 * 60 * 1000));
-            var minutes = Math.floor((duration % (60 * 60 * 1000)) / (60 * 1000));
-            var seconds = Math.floor((duration % (60 * 1000)) / 1000);
-            var milliseconds = duration % 1000;
-            var formattedDuration = '';
-            if (hours > 0) {
-              formattedDuration += hours + 'h ';
-            }
-            if (minutes > 0) {
-              formattedDuration += minutes + 'm ';
-            }
-            if (seconds > 0) {
-              formattedDuration += seconds + 's ';
-            }
-            if (milliseconds > 0) {
-              formattedDuration += milliseconds + 'ms ';
-            }
-            return params.marker + params.name + ': ' + formattedDuration.trim();
-          }
-        },
-        //标题
-        title: {
-          show: false,
-          text: '甘特图-设备运行状态',
-          left: 'center'
-        },
-        legend: {
-          show: true,
-          data: ['运行', '故障', '等待'],
-          right: 80,
-          top: 'auto', // 取消 top 属性的设置
-          bottom: 0, // 设置底部距离为 0
-          left: 'center'
-        },
-        //缩放
-        dataZoom: [{
-          type: 'slider',
-          show : false,
-          filterMode: 'weakFilter',
-          showDataShadow: false,
-          top: 400,
-          height: 10,
-          borderColor: 'transparent',
-          backgroundColor: '#e2e2e2',
-          handleIcon: 'M10.7,11.9H9.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4h1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7v-1.2h6.6z M13.3,22H6.7v-1.2h6.6z M13.3,19.6H6.7v-1.2h6.6z', //jshint ignore:line
-          handleSize: 20,
-          handleStyle: {
-            shadowBlur: 6,
-            shadowOffsetX: 1,
-            shadowOffsetY: 2,
-            shadowColor: '#aaa'
-          },
-          labelFormatter: '',
-          start: 0,
-          end: 70,
-        }, {
-          type: 'inside',
-          filterMode: 'weakFilter'
-
-        }],
-        grid: {
-          top: 0,
-          height: '80%'
-        },
-        xAxis: {
-          min: this.startTime,
-          max: this.startTime + 24 * 60 * 60 * 1000 - 1,
-          scale: true,
-          axisLabel: {
-            formatter: function (val) {
-              var date = new Date(val);
-              var hours = date.getHours().toString().padStart(2, '0');
-              var minutes = date.getMinutes().toString().padStart(2, '0');
-              return hours + ':' + minutes;
-            }
-          }
-        },
-        yAxis: {
-          data: this.categories
-        },
-
-        series: [
-          {
-          name:'运行',
-          type: 'custom',
-          renderItem: renderItem,
-          itemStyle: {
-            opacity: 0.8,
-            color: "#75d874"
-          },
-          encode: {
-            x: [1, 2],
-            y: 0
-          },
-          data: this.data
-          },
-          {
-            name:'故障',
-            type: 'custom',
-            renderItem: renderItem,
-            itemStyle: {
-              opacity: 0.8,
-              color: "#bd6d6c",
-              borderWidth: 2
-            },
-            encode: {
-              x: [1, 2],
-              y: 0
-            },
-            data: this.data
-          },
-          {
-            name:'等待',
-            type: 'custom',
-            renderItem: renderItem,
-            itemStyle: {
-              opacity: 0.8,
-              color: "#e0bc78",
-              borderWidth: 2
-            },
-            encode: {
-              x: [1, 2],
-              y: 0
-            },
-            data: this.data
-          },
-          {
-            name:'备用',
-            type: 'custom',
-            renderItem: renderItem,
-            itemStyle: {
-              opacity: 0.8,
-              color: "#7b9ce1",
-              borderWidth: 2
-            },
-            encode: {
-              x: [1, 2],
-              y: 0
-            },
-            data: this.data
-          }
-        ]
-      }
-    )
-    function renderItem(params, api) {
-      var categoryIndex = api.value(0);
-      var start = api.coord([api.value(1), categoryIndex]);
-      var end = api.coord([api.value(2), categoryIndex]);
-      var height = api.size([0, 1])[1] * 0.6;
-
-      var rectShape = echarts.graphic.clipRectByRect({
-        x: start[0],
-        y: start[1] - height / 2,
-        width: end[0] - start[0],
-        height: height
-      }, {
-        x: params.coordSys.x,
-        y: params.coordSys.y,
-        width: params.coordSys.width,
-        height: params.coordSys.height
-      });
-      return rectShape && {
-        type: 'rect',
-        shape: rectShape,
-        style: api.style()
-      };
-    }
-  },
 
   created() {
-    this.generateData()
-    this.getEquipmentStatusList()
-
     this.getList()
+    this.getLineChartData()
     this.getLinePieChartData()
   },
   methods: {
@@ -627,81 +362,66 @@ export default {
           this.loading = false;
         }
       );
+    },
 
-
-      listBatchT(this.addDateRange(this.batchQueryParams, this.dateRange)).then(response => {
-        for (const row of response.rows){
-          this.xAixsData.push(row.batchName)
-          this.lineChartData.qualifiedData.push(row.qualifiedQuantity)
-          this.lineChartData.unqualifiedData.push(row.unqualifiedQuantity)
-        }
+    getLineChartData(){
+      this.loading = true;
+      this.getLineTime()
+      listBatchLine(this.addDateRange(this.lineQueryParams, this.lineDataRange)).then(response => {
+          for (const row of response.rows){
+            this.xAixsData.push(row.batchName)
+            this.lineChartData.qualifiedData.push(row.qualifiedQuantity)
+            this.lineChartData.unqualifiedData.push(row.unqualifiedQuantity)
+          }
           this.loading = false;
         }
       );
+
+      console.log(this.xAixsData)
     },
+
 
     getLinePieChartData(){
       this.loading = true;
-      getStatisticInfo().then(response => {
+      this.getLinePieTime()
+      getStatisticInfo(this.addDateRange(this.defectQueryParams,this.defectDateRange)).then(response => {
         for (const row of response.data){
           if (!row.slice(1).every(element => element === 0)){
-            this.LinePieChartData.push(row)
+            this.linePieChartData.push(row)
           }
         }
         this.loading = false;
       })
     },
 
-    /*getLinePieChartData() {
-      this.defectTypeList.forEach(d =>{
-        const array = []
-        array.push(d)
-        this.resetQuery()
-        this.queryParams.defectTypeName = d
-        this.formattedDates.forEach(date => {
-          this.dateRange = [date, date]
-          listDevPart(this.addDateRange(this.queryParams, this.dateRange)).then(response => {
-              console.log(response.total)
-              array.push(response.total)
-          });
-        })
-        console.log(array)
-        if (!array.slice(1).every(element => element === 0)){
-          this.LinePieChartData.push(array)
-        }
-      })
-
-    },*/
-
-
-
-    getCurrentDate() {
-      const date = new Date();
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      this.currentDate = `${year}-${month}-${day}`;
-      this.dateRange= [this.currentDate, this.currentDate];
+    handleLineQuery(){
+      this.xAixsData = []
+      this.lineChartData.qualifiedData = []
+      this.lineChartData.unqualifiedData = []
+      this.getLineChartData();
     },
 
-    /*iterateWeekDates(){
-      const currentDate = new Date(); // 获取当前日期
-      const currentDay = currentDate.getDay(); // 获取当前是星期几（0 - 周日，1 - 周一，...，6 - 周六）
-      const startOfWeek = new Date(currentDate); // 创建一个新的日期对象，用于存储本周的周一日期
-
-      // 计算本周的周一日期
-      startOfWeek.setDate(currentDate.getDate() - currentDay + 1);
-
-      for (let i = startOfWeek.getDate(); i <= currentDate.getDate(); i++) {
-        const date = new Date(startOfWeek);
-        date.setDate(i);
-
-        // 格式化日期为 yyyy-mm-dd
-        const formattedDate = date.toISOString().slice(0, 10);
-        this.formattedDates.push(formattedDate);
-
+    handleLineReset() {
+      this.lineDataRange = [];
+      this.lineQueryParams = {
+        partTypeName: undefined,
       }
-    },*/
+      this.handleLineQuery();
+    },
+
+    /** 搜索按钮操作 */
+    handleLinePieQuery() {
+      this.linePieChartData = []
+      this.getLinePieChartData();
+    },
+
+    handleLinePieReset() {
+      this.defectDateRange = [];
+      this.defectQueryParams = {
+        partTypeName: undefined,
+      }
+      this.handleLinePieQuery();
+    },
 
     /** 重置按钮操作 */
     resetQuery() {
@@ -714,61 +434,6 @@ export default {
         defectTypeName:undefined,
         devName: undefined
       }
-    },
-
-
-
-    getEquipmentStatusList(){
-      this.loading = true;
-      getEquipmentStatus(this.addDateRange(this.queryParams, this.dateRange)).then(response =>{
-          response.rows.map(item => {
-            const index = item.devId;
-            const baseTime = new Date(item.startTime).getTime();
-            const endTime = new Date(item.endTime).getTime();
-            const duration = endTime - baseTime;
-
-            const typeItem = this.types.find(type => type.name === item.statusName);
-
-            this.data.push({
-              name: item.statusName,
-              value: [index, baseTime, endTime, duration],
-              itemStyle: {
-                color: typeItem ? typeItem.color : 'white'// 根据实际需求设置颜色值
-              }
-            });
-            });
-
-          this.total = response.total;
-          this.loading = false;
-
-          console.log(this.data)
-        }
-      );
-    },
-
-    generateData() {
-      // 产生模拟数据的代码
-      echarts.util.each(this.categories, function (category, index) {
-        var baseTime = this.startTime;
-        for (var i = 0; i < this.dataCount; i++) {
-          var typeItem = this.types[Math.round(Math.random() * (this.types.length - 1))];
-          var duration = Math.round(Math.random() * 3600 * 2000);
-          this.data.push({
-            name: typeItem.name,
-            value: [
-              index,
-              baseTime,
-              baseTime += duration,
-              duration
-            ],
-            itemStyle: {
-              color: typeItem.color
-            }
-          });
-          baseTime += Math.round(Math.random() * 6000000);
-        }
-      }.bind(this));
-      console.log(this.data)
     },
 
     getIconName(status) {
@@ -792,9 +457,50 @@ export default {
       }
     },
 
-    handleSetLineChartData(type) {
-      this.lineChartData = lineChartData[type]
+
+    getLineTime(){
+      if (this.lineDataRange.length === 0){
+        const today = moment();
+        this.lineDataRange = [today.format('YYYY-MM-DD'), today.format('YYYY-MM-DD')]
+      }
+    },
+
+    getLinePieTime(){
+
+      if(this.defectDateRange.length === 0){
+        const today = moment();
+        const sevenDaysAgo = moment().subtract(6, 'days');
+
+        this.defectDateRange = [sevenDaysAgo.format('YYYY-MM-DD'), today.format('YYYY-MM-DD')];
+      }
+
+      const row = ['Time'];
+      const startDate = moment(this.defectDateRange[0]);
+      const endDate = moment(this.defectDateRange[1]);
+      while (startDate <= endDate) {
+        const formattedDate = startDate.format('YYYY-MM-DD');
+        row.push(formattedDate);
+        startDate.add(1, 'day');
+      }
+      this.linePieChartData.push(row);
+    },
+
+    getStackBarTime(){
+      if(this.stackBarTime.length === 0){
+        const today = moment();
+        const sevenDaysAgo = moment().subtract(6, 'days');
+
+        while (sevenDaysAgo <= today){
+          this.stackBarTime.push(sevenDaysAgo.format('MM-DD'));
+          sevenDaysAgo.add(1, 'day');
+        }
+      }
+
+
     }
+
+
+
   }
 };
 </script>

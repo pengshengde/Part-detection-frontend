@@ -1,0 +1,13 @@
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  script:
+    - docker build -t vue2:latest -f ./Dockerfile .   # 使用Dockerfile构建镜像
+
+deploy:
+  stage: deploy
+  script:
+    - docker run -d -p 80:80 vue2:latest   # 运行镜像作为容器

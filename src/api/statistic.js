@@ -11,6 +11,15 @@ export function listDevPart(query) {
   })
 }
 
+// 查询批次信息
+export function listBatchLine(query) {
+  return request({
+    url: "/quality/statistic/getBatchInfo",
+    method: "get",
+    params: query
+  })
+}
+
 // 查询缺陷类型列表
 export function getStatisticInfo(query) {
   return request({

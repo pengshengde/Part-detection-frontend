@@ -70,9 +70,9 @@ export default {
       this.chart.setOption({
         xAxis: {
           data: this.xAixsData,
-          boundaryGap: false,
+          boundaryGap: true,
           axisTick: {
-            show: false
+            show: true
           }
         },
         grid: {
