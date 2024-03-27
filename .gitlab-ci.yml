@@ -2,12 +2,25 @@ stages:
   - build
   - deploy
 
-build:
+build-flask:
   stage: build
   script:
-    - docker build -t vue2:latest -f ./Dockerfile .   # 使用Dockerfile构建镜像
+    - docker build -t registry.keylab.org/vopak-flask:v1.0 flaskdev/  # 使用Dockerfile构建镜像
+    - docker build -t registry.keylab.org/vopak-flacs:v1.0 flacs2json/
+    - docker push registry.keylab.org/vopak-flask:v1.0
+    - docker push registry.keylab.org/vopak-flacs:v1.0
+  only:
+    - main
+  tags:
+    - docker
 
-deploy:
+deploy-flask:
   stage: deploy
   script:
-    - docker run -d -p 80:80 vue2:latest   # 运行镜像作为容器
+    - docker pull registry.keylab.org/<package>:<tags> # 更新镜像⽂件
+    - docker rm -f <builder> # 停⽌某个镜像，其中<container_name> 要和 docker run保持⼀致
+    - docker run -d -p 80:80  --net=host --name <builder> --restart=always -e "ENV_NAME"="KEY" -v /path/to/local:/path/in/container registry.keylab.org/<package>:<tag>
+  only:
+    - main
+  tags:
+    - docker
